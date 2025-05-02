@@ -14,8 +14,7 @@ public class BitcoinPriceService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public List<PriceData> getHistoricalPrices() {
-        String url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=daily";
-
+        String url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily";
 
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
         List<List<Number>> prices = (List<List<Number>>) response.get("prices");
