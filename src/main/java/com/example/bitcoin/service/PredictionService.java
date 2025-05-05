@@ -5,7 +5,7 @@ import com.example.bitcoin.util.TechnicalIndicatorUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,27 +24,46 @@ public class PredictionService {
 
         double sma5 = TechnicalIndicatorUtil.calculateSMA(prices, 5);
         double sma10 = TechnicalIndicatorUtil.calculateSMA(prices, 10);
+        double ema5 = TechnicalIndicatorUtil.calculateEMA(prices, 5);
+        double ema10 = TechnicalIndicatorUtil.calculateEMA(prices, 10);
         double rsi14 = TechnicalIndicatorUtil.calculateRSI(prices, 14);
         double latestPrice = prices.get(prices.size() - 1);
+
+        Map<String, Double> macdResult = TechnicalIndicatorUtil.calculateMACD(prices, 12, 26, 9);
+        double macd = macdResult.getOrDefault("macd", 0.0);
+        double signal = macdResult.getOrDefault("signal", 0.0);
+
+        Map<String, Double> bb = TechnicalIndicatorUtil.calculateBollingerBands(prices, 20);
+        double lowerBand = bb.getOrDefault("lower", 0.0);
 
         String prediction;
         String reason;
 
-        if (sma5 > sma10 && rsi14 < 70) {
+        if (ema5 > ema10 && rsi14 < 70 && macd > signal && latestPrice > lowerBand) {
             prediction = "Naik";
-            reason = "SMA-5 berada di atas SMA-10 (golden cross) dan RSI belum overbought (" + String.format("%.2f", rsi14) + ")";
-        } else if (sma5 < sma10 && rsi14 > 30) {
+        } else if (ema5 < ema10 && rsi14 > 30 && macd < signal && latestPrice < sma10) {
             prediction = "Turun";
-            reason = "SMA-5 di bawah SMA-10 (death cross) dan RSI menunjukkan penurunan (" + String.format("%.2f", rsi14) + ")";
         } else {
             prediction = "Tidak pasti";
-            reason = "Indikator tidak memberikan sinyal jelas: SMA5=" + sma5 + ", SMA10=" + sma10 + ", RSI=" + rsi14;
         }
 
-        Map<String, Object> result = new HashMap<>();
+        reason = String.format(
+                "SMA-5=%.2f | SMA-10=%.2f | EMA-5=%.2f | EMA-10=%.2f | RSI-14=%.2f | MACD=%.2f | Signal=%.2f | Bollinger Lower=%.2f",
+                sma5, sma10, ema5, ema10, rsi14, macd, signal, lowerBand
+        );
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("sma5", sma5);
+        result.put("sma10", sma10);
+        result.put("ema5", ema5);
+        result.put("ema10", ema10);
+        result.put("rsi14", rsi14);
+        result.put("macd", macd);
+        result.put("macd_signal", signal);
+        result.put("bollinger_lower", lowerBand);
         result.put("latest_price", latestPrice);
-        result.put("prediction", prediction);
         result.put("reason", reason);
+        result.put("prediction", prediction);
 
         return result;
     }
